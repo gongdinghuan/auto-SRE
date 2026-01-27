@@ -101,7 +101,7 @@ class AutoOpsGUI:
         
         # 创建主窗口 (必须先创建 root)
         self.root = tk.Tk()
-        self.root.title("🖥️ 自动运维助手 - SSH 远程管理工具 (AI 增强版)")
+        self.root.title("🖥️ 自动运维助手 - SSH 远程管理工具 (AI 增强版gdh)")
         self.root.geometry("950x800")
         self.root.minsize(850, 600)
         
