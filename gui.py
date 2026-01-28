@@ -410,26 +410,32 @@ class AutoOpsGUI:
         os_type = self.ssh_manager.get_detected_os()
         server_info = self.ssh_manager.get_server_info_summary()
         memory_context = self.memory_manager.get_context_for_ai()
+        session_messages = self.memory_manager.get_session_messages()
         
         def ai_thread():
-            cmd, desc, danger, expl, note = self.ai_manager.parse_command(
-                user_input, os_type, server_info, memory_context
+            cmd, desc, danger, expl, note, follow_up = self.ai_manager.parse_command(
+                user_input, os_type, server_info, memory_context, session_messages
             )
-            self.root.after(0, lambda: self._on_ai_result(cmd, desc, danger, expl, note))
+            self.root.after(0, lambda: self._on_ai_result(cmd, desc, danger, expl, note, follow_up))
         
         threading.Thread(target=ai_thread, daemon=True).start()
     
-    def _on_ai_result(self, cmd: str, desc: str, danger: bool, expl: str, note: str):
+    def _on_ai_result(self, cmd: str, desc: str, danger: bool, expl: str, note: str, follow_up: str = ""):
         self.exec_btn.config(state=tk.NORMAL)
         
         if not cmd:
-            self._append_output(f"[AI] {desc}: {expl}\n\n", 'warning')
+            self._append_output(f"[AI] {desc}: {expl}\n", 'warning')
+            if note:
+                self._append_output(f"[💬] {note}\n", 'friendly')
+            self._append_output("\n", 'info')
             return
         
         self._append_output(f"[AI] {desc}\n", 'ai')
         self._append_output(f"[命令] {cmd}\n", 'info')
         if note:
             self._append_output(f"[💬] {note}\n", 'friendly')
+        if follow_up:
+            self._append_output(f"[💡 建议] {follow_up}\n", 'help')
         
         if danger:
             if not messagebox.askyesno("⚠️ 危险操作", f"命令: {cmd}\n\n{expl}\n\n确定执行？"):
@@ -464,11 +470,37 @@ class AutoOpsGUI:
         threading.Thread(target=exec_thread, daemon=True).start()
     
     def _on_exec_result(self, success: bool, output: str, cmd: str):
-        self._append_output(f"{output}\n\n", 'success' if success else 'error')
+        self._append_output(f"{output}\n", 'success' if success else 'error')
         self.exec_btn.config(state=tk.NORMAL)
         
         # 保存到记忆
         self.memory_manager.add_operation(self.last_user_input, cmd, output, success)
+        
+        # 如果启用 AI，分析输出
+        if self.ai_mode_enabled.get() and self.ai_manager.is_configured():
+            self._analyze_output_with_ai(cmd, output)
+    
+    def _analyze_output_with_ai(self, cmd: str, output: str):
+        """使用 AI 分析命令输出"""
+        self._append_output("[🤖 AI 解读中...]\n", 'ai')
+        
+        os_type = self.ssh_manager.get_detected_os()
+        server_info = self.ssh_manager.get_server_info_summary()
+        
+        def analyze_thread():
+            analysis = self.ai_manager.analyze_output(
+                self.last_user_input, cmd, output, os_type, server_info
+            )
+            self.root.after(0, lambda: self._on_analysis_result(analysis))
+        
+        threading.Thread(target=analyze_thread, daemon=True).start()
+    
+    def _on_analysis_result(self, analysis: str):
+        """显示 AI 分析结果"""
+        if analysis:
+            self._append_output(f"\n💡 {analysis}\n\n", 'friendly')
+        else:
+            self._append_output("\n", 'info')
     
     def _quick_command(self, cmd: str):
         if not self.ssh_manager.is_connected():
