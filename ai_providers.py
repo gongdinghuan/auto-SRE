@@ -2,6 +2,8 @@
 """
 AI 提供商管理模块
 支持多家 AI 大模型：DeepSeek、OpenAI、通义千问、Ollama
+
+作者: GDH
 """
 
 from openai import OpenAI

@@ -2,6 +2,8 @@
 """
 图形用户界面模块
 集成多 AI 提供商、服务器信息显示、操作记忆功能
+
+作者: GDH
 """
 
 import tkinter as tk
@@ -69,7 +71,7 @@ class AutoOpsGUI:
         self.memory_manager = memory_manager
         
         self.root = tk.Tk()
-        self.root.title("🖥️ 自动运维助手 - AI 增强版 v2.0")
+        self.root.title("🖥️ 自动运维助手 - AI 增强版gdh v2.0")
         self.root.geometry("1000x850")
         self.root.minsize(900, 700)
         

@@ -2,6 +2,8 @@
 """
 自动运维助手 - 主程序入口 v2.0
 支持多 AI 提供商、自动服务器检测、操作记忆
+
+作者: GDH
 """
 
 from ssh_manager import SSHManager
